@@ -17,6 +17,7 @@ from langchain_core.prompts import PromptTemplate
 from src.document_loader import DocumentLoader
 from src.text_chunker import TextChunker
 from src.vector_store_gemini import VectorStoreGemini
+from src.free_tier_manager import FreeTierManager
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,9 @@ class RAGPipeline:
             vector_db_path=vector_db_path,
             google_api_key=google_api_key or os.getenv("GOOGLE_API_KEY")
         )
+        
+        # Initialize free tier manager
+        self.free_tier_manager = FreeTierManager()
         
         # Load existing vector store if available
         self.vector_store.load_vector_store()
@@ -155,6 +159,22 @@ class RAGPipeline:
         """
         logger.info(f"Processing query: {question[:50]}...")
         
+        # Check free tier limits before making API call
+        model = "gemini-2.5-flash"  # Using the free tier model
+        can_make_request, reason = self.free_tier_manager.can_make_request(model)
+        
+        if not can_make_request:
+            wait_time = self.free_tier_manager.get_wait_time(model)
+            return {
+                "answer": f"Free tier limit reached. {reason} Please try again later.",
+                "sources": [],
+                "metadata": {
+                    "error": "RATE_LIMIT_EXCEEDED",
+                    "wait_time_seconds": wait_time,
+                    "usage_stats": self.free_tier_manager.get_usage_stats()
+                }
+            }
+        
         try:
             # Retrieve relevant documents
             relevant_docs = self.vector_store.similarity_search(
@@ -177,6 +197,9 @@ class RAGPipeline:
             prompt = self.qa_prompt.format(context=context, question=question)
             response = self.vector_store.chat_model.invoke(prompt)
             
+            # Record successful API request for usage tracking
+            self.free_tier_manager.record_request(model)
+            
             # Prepare result
             result = {
                 "answer": response.content,
@@ -184,7 +207,7 @@ class RAGPipeline:
                 "metadata": {
                     "retrieved_docs": len(relevant_docs),
                     "context_length": len(context),
-                    "model": "gemini-1.5-flash"
+                    "model": "gemini-2.5-flash"
                 }
             }
             
@@ -221,9 +244,10 @@ class RAGPipeline:
             "document_loader": self.document_loader.get_document_info(),
             "vector_store": self.vector_store.get_stats(),
             "chat_model": {
-                "model": "gemini-1.5-flash",
+                "model": "gemini-2.5-flash",
                 "provider": "Google"
-            }
+            },
+            "free_tier_usage": self.free_tier_manager.get_usage_stats()
         }
 
 # Example usage

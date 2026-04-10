@@ -50,7 +50,7 @@ class VectorStoreGemini:
         # Initialize chat model for later use
         self.chat_model = ChatGoogleGenerativeAI(
             google_api_key=google_api_key,
-            model="models/gemini-2.5-flash",  # Correct model name from API
+            model="gemini-2.5-flash",  # Available model with 20 req/day limit
             temperature=0.1  # More factual responses
         )
         
