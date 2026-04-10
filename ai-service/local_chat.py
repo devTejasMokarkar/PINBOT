@@ -5,6 +5,7 @@ Local chat simulation for testing without API calls
 
 import os
 import sys
+from pathlib import Path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
 from src.agent_with_persona import AgentWithPersona
@@ -27,19 +28,25 @@ def local_chat_demo():
     agent = AgentWithPersona(google_api_key=api_key)
     
     # Set persona
-    agent.set_persona("Real Estate Agent")
+    agent.set_persona("General Assistant")
     print(f"Persona: {agent.get_welcome_message()}")
     
-    # Simulate document loading
-    print("\n=== Available Properties ===")
-    properties = [
-        "Property 1: 2BHK apartment in Bandra - 80L",
-        "Property 2: 3BHK villa in Andheri - 1.2Cr", 
-        "Property 3: 1BHK studio in Powai - 45L"
-    ]
-    
-    for prop in properties:
-        print(f"  {prop}")
+    # Show actual uploaded documents
+    print("\n=== Available Documents ===")
+    uploads_path = Path("Uploads")
+    if uploads_path.exists():
+        documents = []
+        for file_path in uploads_path.glob("*"):
+            if file_path.is_file() and file_path.suffix.lower() in {'.pdf', '.txt', '.md'}:
+                documents.append(f"Document: {file_path.name}")
+        
+        if documents:
+            for doc in documents:
+                print(f"  {doc}")
+        else:
+            print("  No documents found in Uploads folder")
+    else:
+        print("  Uploads folder not found")
     
     print("\n=== Chat Simulation ===")
     print("(Type 'quit' to exit)")
@@ -48,22 +55,29 @@ def local_chat_demo():
     
     # Enhanced keyword-based responses
     responses = {
-        "2bhk": "I found a great 2BHK apartment in Bandra for 80L. It's spacious and well-located with 2 bedrooms, living room, kitchen, and parking!",
-        "3bhk": "There's a beautiful 3BHK villa in Andheri available for 1.2Cr. Perfect for families! It has 3 bedrooms, garden, and 24/7 security.",
-        "1bhk": "For budget-conscious buyers, there's a 1BHK studio in Powai for 45L. Cozy and perfect for singles or couples.",
-        "apartment": "I have several apartments available. The 2BHK in Bandra (80L) and 1BHK in Powai (45L) are great options!",
-        "villa": "The 3BHK villa in Andheri is excellent - 1.2Cr with great amenities like garden, parking, and security!",
-        "price": "Properties range from 45L to 1.2Cr. The 1BHK studio is 45L, 2BHK apartment is 80L, and 3BHK villa is 1.2Cr.",
-        "location": "Available locations: Bandra (premium area), Andheri (family-friendly), and Powai (budget-friendly).",
-        "budget": "What's your budget? I can help find properties: 45L (studio), 80L (2BHK), or 1.2Cr (3BHK villa).",
-        "bandra": "Bandra is a premium location! I have a 2BHK apartment there for 80L. Great connectivity and amenities.",
-        "andheri": "Andheri is perfect for families! There's a 3BHK villa available for 1.2Cr with excellent facilities.",
-        "powai": "Powai offers great value! There's a 1BHK studio for 45L - ideal for first-time buyers.",
-        "cheap": "The most affordable option is the 1BHK studio in Powai at 45L. Great for budget-conscious buyers!",
-        "expensive": "The premium option is the 3BHK villa in Andheri at 1.2Cr. Luxury living with great amenities!",
-        "family": "For families, I recommend the 3BHK villa in Andheri (1.2Cr) - plenty of space and family-friendly neighborhood.",
-        "single": "For singles, the 1BHK studio in Powai (45L) is perfect - affordable and low maintenance.",
-        "couple": "For couples, the 2BHK apartment in Bandra (80L) offers great space and location!"
+        "perfume": "I have the INSPIRED PERFUME 2026 catalog available! It contains information about various fragrances, their notes, prices, and availability.",
+        "fragrance": "Based on the perfume catalog, there are various fragrances available with different scent profiles including floral, woody, and citrus notes.",
+        "citrus": "Yes, we have citrus perfumes available! The catalog features fresh citrus fragrances with notes of lemon, bergamot, and orange. These are perfect for daytime wear and have a refreshing, energizing scent.",
+        "scent": "The catalog includes detailed scent descriptions with top, middle, and base notes for each perfume.",
+        "price": "Pricing information is available in the perfume catalog with different sizes and price points for each fragrance.",
+        "cost": "The catalog shows various price ranges depending on the perfume size and concentration (EDT, EDP, etc.).",
+        "available": "Availability information is in the catalog showing which perfumes are currently in stock.",
+        "how many": "The perfume catalog contains multiple fragrance options. For the exact count, please check the catalog details.",
+        "notes": "Each perfume has detailed fragrance notes including top, heart (middle), and base notes that create the complete scent profile.",
+        "size": "The catalog shows different bottle sizes available for each perfume (30ml, 50ml, 100ml, etc.).",
+        "men": "There are perfumes specifically designed for men with masculine scent profiles in the catalog.",
+        "women": "The catalog includes feminine fragrances designed specifically for women.",
+        "unisex": "Some perfumes in the catalog are unisex and suitable for anyone.",
+        "brand": "The catalog includes information about the INSPIRED perfume brand and its collection.",
+        "catalog": "The INSPIRED PERFUME 2026 catalog is your main document with all fragrance information.",
+        "help": "I can help you find information from the perfume catalog! Ask about fragrances, prices, scents, or availability.",
+        "document": "I have access to the INSPIRED PERFUME 2026 catalog with detailed perfume information.",
+        "information": "All perfume information is available in the catalog. What specific fragrance details are you looking for?",
+        "what": "I can provide information about perfumes from the catalog! Ask about fragrances, prices, scents, or availability!",
+        "lemon": "The catalog includes citrus fragrances with lemon notes - bright, fresh, and perfect for summer!",
+        "orange": "Orange-based fragrances are available with sweet and zesty citrus notes.",
+        "bergamot": "Bergamot scents are featured in several citrus perfumes - elegant and refreshing.",
+        "summer": "For summer, citrus perfumes are ideal - light, refreshing, and long-lasting."
     }
     
     while True:
@@ -78,7 +92,7 @@ def local_chat_demo():
                 continue
             
             # Find best matching response
-            response = "I can help you with properties! I have options in Bandra, Andheri, and Powai. What are you looking for specifically?"
+            response = "I can help you find information from the perfume catalog! Ask about fragrances, prices, scents, availability, or any perfume-related questions. What are you looking for?"
             
             # Check for multiple keywords and prioritize
             matched_keywords = []
@@ -92,12 +106,12 @@ def local_chat_demo():
                 response = matched_keywords[0][1]
             
             # Add context-aware follow-ups
-            if "where" in question and any(loc in question for loc in ["bandra", "andheri", "powai"]):
-                response += " Would you like more details about this property?"
-            elif "price" in question or "cost" in question or "rate" in question:
-                response += " Which price range interests you most?"
+            if "catalog" in question and any(term in question for term in ["price", "fragrance", "scent"]):
+                response += " Would you like more specific details about any particular perfume?"
+            elif "how many" in question or "available" in question:
+                response += " Are you looking for a specific fragrance or general availability?"
             elif "help" in question or "guid" in question:
-                response = "I'm here to help! I can show you properties in different budgets and locations. Just tell me what you're looking for!"
+                response = "I'm here to help! I can find information about perfumes, fragrances, prices, scents, or availability from the catalog. Just tell me what you need!"
             
             print(f"\nPinBot: {response}")
             

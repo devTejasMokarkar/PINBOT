@@ -101,12 +101,33 @@ class FreeTierManager:
         daily_count = self.usage_data["daily"].get(model, 0)
         if daily_count >= limits["requests_per_day"]:
             wait_time = 24 * 60 * 60  # 24 hours in seconds
+            reset_time = datetime.now() + timedelta(seconds=wait_time)
+            
+            # Log detailed quota message
+            logger.warning(f"=== DAILY QUOTA EXCEEDED ===")
+            logger.warning(f"Model: {model}")
+            logger.warning(f"Used: {daily_count}/{limits['requests_per_day']} requests")
+            logger.warning(f"Reset time: {reset_time.strftime('%Y-%m-%d %H:%M:%S')}")
+            logger.warning(f"Wait time: {wait_time//3600}h {(wait_time%3600)//60}m")
+            logger.warning(f"Recommendation: Use local demo or upgrade plan")
+            logger.warning("==============================")
+            
             return False, f"Daily limit reached ({limits['requests_per_day']}). Wait {wait_time//3600}h {(wait_time%3600)//60}m"
         
         # Check minute limit
         minute_count = self.usage_data["minute"].get(model, 0)
         if minute_count >= limits["requests_per_minute"]:
             wait_time = 60  # 1 minute in seconds
+            reset_time = datetime.now() + timedelta(seconds=wait_time)
+            
+            # Log detailed minute limit message
+            logger.warning(f"=== MINUTE QUOTA EXCEEDED ===")
+            logger.warning(f"Model: {model}")
+            logger.warning(f"Used: {minute_count}/{limits['requests_per_minute']} requests")
+            logger.warning(f"Reset time: {reset_time.strftime('%H:%M:%S')}")
+            logger.warning(f"Wait time: {wait_time} seconds")
+            logger.warning("==============================")
+            
             return False, f"Minute limit reached. Wait {wait_time} seconds"
         
         return True, "Request allowed"
@@ -120,7 +141,26 @@ class FreeTierManager:
         
         self._save_usage()
         
-        logger.info(f"Recorded request for {model}. Daily: {self.usage_data['daily'][model]}, Minute: {self.usage_data['minute'][model]}")
+        # Log detailed usage tracking
+        daily_used = self.usage_data["daily"][model]
+        daily_limit = self.limits[model]["requests_per_day"]
+        minute_used = self.usage_data["minute"][model]
+        minute_limit = self.limits[model]["requests_per_minute"]
+        
+        logger.info(f"=== USAGE TRACKED ===")
+        logger.info(f"Model: {model}")
+        logger.info(f"Daily: {daily_used}/{daily_limit} ({daily_used/daily_limit*100:.1f}%)")
+        logger.info(f"Minute: {minute_used}/{minute_limit} ({minute_used/minute_limit*100:.1f}%)")
+        logger.info(f"Daily remaining: {daily_limit - daily_used}")
+        logger.info(f"Minute remaining: {minute_limit - minute_used}")
+        logger.info("==================")
+        
+        # Warning when approaching limits
+        if daily_used >= daily_limit * 0.8:  # 80% warning
+            logger.warning(f"WARNING: Daily quota almost exhausted ({daily_used}/{daily_limit})")
+        
+        if minute_used >= minute_limit * 0.8:  # 80% warning
+            logger.warning(f"WARNING: Minute quota almost exhausted ({minute_used}/{minute_limit})")
     
     def get_usage_stats(self) -> Dict[str, Any]:
         """Get current usage statistics."""

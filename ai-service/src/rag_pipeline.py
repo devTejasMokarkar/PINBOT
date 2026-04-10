@@ -165,13 +165,35 @@ class RAGPipeline:
         
         if not can_make_request:
             wait_time = self.free_tier_manager.get_wait_time(model)
+            usage_stats = self.free_tier_manager.get_usage_stats()
+            daily_usage = usage_stats.get('daily', {}).get(model, {})
+            
+            # Create detailed user-friendly message
+            user_message = f"""=== QUOTA LIMIT REACHED ===
+
+Daily Limit: {daily_usage.get('limit', 20)} requests
+Used: {daily_usage.get('used', 0)} requests  
+Remaining: {daily_usage.get('remaining', 0)} requests
+
+{reason}
+
+=== YOUR OPTIONS ===
+1. Wait for quota reset (tomorrow)
+2. Use local demo: python local_chat.py
+3. Check status: python quota_wait_time.py
+
+=== RECOMMENDATION ===
+Use 'python local_chat.py' for immediate testing without API limits!
+=============================="""
+            
             return {
-                "answer": f"Free tier limit reached. {reason} Please try again later.",
+                "answer": user_message,
                 "sources": [],
                 "metadata": {
                     "error": "RATE_LIMIT_EXCEEDED",
                     "wait_time_seconds": wait_time,
-                    "usage_stats": self.free_tier_manager.get_usage_stats()
+                    "usage_stats": usage_stats,
+                    "quota_exceeded": True
                 }
             }
         

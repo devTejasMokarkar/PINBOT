@@ -1,0 +1,9 @@
+{
+  "daily": {
+    "gemini-2.5-flash": 15
+  },
+  "minute": {
+    "gemini-2.5-flash": 15
+  },
+  "last_reset": "2026-04-10T17:53:23.738571"
+}

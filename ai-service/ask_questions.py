@@ -13,7 +13,7 @@ from src.agent_with_persona import AgentWithPersona
 from dotenv import load_dotenv
 
 def main():
-    print("🤖 PinBot - Real Estate AI Agent")
+    print(" PinBot - Generic AI Assistant")
     print("=" * 50)
     
     # Load environment
@@ -22,20 +22,21 @@ def main():
     # Initialize agent
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
-        print("❌ Please set GOOGLE_API_KEY in your .env file")
+        print(" Please set GOOGLE_API_KEY in your .env file")
         return
     
     agent = AgentWithPersona(google_api_key=api_key)
     
     # Set persona
-    agent.set_persona("Real Estate Agent")
-    print(f"✅ Persona: {agent.get_welcome_message()}")
+    agent.set_persona("General Assistant")
+    print(f"Persona: {agent.get_welcome_message()}")
     
     # Ingest documents
-    print("\n📚 Loading documents...")
+    print("\n Loading documents...")
     result = agent.ingest_from_uploads()
     if result['status'] == 'success':
-        print(f"✅ Loaded {result['documents_processed']} documents")
+        print(f" Loaded {result['documents_processed']} documents")
+        print(f" Created {result['chunks_created']} knowledge chunks")
         print(f"✅ Created {result['chunks_created']} knowledge chunks")
     else:
         print(f"❌ Error loading documents: {result.get('error')}")
