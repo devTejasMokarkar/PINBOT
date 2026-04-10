@@ -217,7 +217,47 @@ Use 'python local_chat.py' for immediate testing without API limits!
             
             # Generate answer using Gemini
             prompt = self.qa_prompt.format(context=context, question=question)
-            response = self.vector_store.chat_model.invoke(prompt)
+            
+            try:
+                response = self.vector_store.chat_model.invoke(prompt)
+            except Exception as e:
+                # Check if it's a quota exceeded error
+                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e) or "quota" in str(e).lower():
+                    logger.error(f"API quota exceeded: {e}")
+                    
+                    # Return the same quota exceeded message
+                    usage_stats = self.free_tier_manager.get_usage_stats()
+                    daily_usage = usage_stats.get('daily', {}).get(model, {})
+                    
+                    user_message = f"""=== QUOTA LIMIT REACHED ===
+
+Daily Limit: {daily_usage.get('limit', 20)} requests
+Used: {daily_usage.get('used', 0)} requests  
+Remaining: {daily_usage.get('remaining', 0)} requests
+
+API quota exceeded. Please try again tomorrow.
+
+=== YOUR OPTIONS ===
+1. Wait for quota reset (tomorrow)
+2. Use local demo: python local_chat.py
+3. Check status: python quota_wait_time.py
+
+=== RECOMMENDATION ===
+Use 'python local_chat.py' for immediate testing without API limits!
+=============================="""
+                    
+                    return {
+                        "answer": user_message,
+                        "sources": [],
+                        "metadata": {
+                            "error": "RATE_LIMIT_EXCEEDED",
+                            "quota_exceeded": True,
+                            "usage_stats": usage_stats
+                        }
+                    }
+                else:
+                    # Re-raise other exceptions
+                    raise e
             
             # Record successful API request for usage tracking
             self.free_tier_manager.record_request(model)

@@ -51,7 +51,8 @@ class VectorStoreGemini:
         self.chat_model = ChatGoogleGenerativeAI(
             google_api_key=google_api_key,
             model="gemini-2.5-flash",  # Available model with 20 req/day limit
-            temperature=0.1  # More factual responses
+            temperature=0.1,  # More factual responses
+            max_retries=0  # Disable retries to catch quota errors immediately
         )
         
         self.vector_store = None
